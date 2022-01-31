@@ -94,7 +94,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $vlan['tag'] = $_POST['tag'];
         $vlan['pcp'] = $pconfig['pcp'];
         $vlan['descr'] = $_POST['descr'];
-        $vlan['vlanif'] = "{$_POST['if']}_vlan{$_POST['tag']}";
+        if (strstr($_POST['if'], '_vlan')) {
+            $parts = explode('_', $_POST['if']);
+            $vlan['vlanif'] = sprintf("%sQ_%s_%s", $parts[0], substr($parts[1], 4), $vlan['tag']);
+        } else {
+            $vlan['vlanif'] = "{$_POST['if']}_vlan{$_POST['tag']}";
+        }
         if (isset($id)) {
             if (($a_vlans[$id]['if'] != $pconfig['if']) || ($a_vlans[$id]['tag'] != $pconfig['tag']) || ($a_vlans[$id]['pcp'] != $pconfig['pcp'])) {
                 if (!empty($a_vlans[$id]['vlanif'])) {
@@ -113,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $vlan['vlanif'] = interface_vlan_configure($vlan);
         }
         ifgroup_setup();
-        if ($vlan['vlanif'] == "" || !stristr($vlan['vlanif'], "vlan")) {
+        if ($vlan['vlanif'] == "") {
             $input_errors[] = gettext("Error occurred creating interface, please retry.");
         } else {
             if (isset($id)) {
@@ -172,7 +177,7 @@ legacy_html_escape_form_data($pconfig);
                           }
                       }
                       foreach ($all_interface_data as $ifn => $ifinfo):
-                        if (strpos($ifn, "_vlan") > 1 || strpos($ifn, "lo") === 0 || strpos($ifn, "enc") === 0 ||
+                        if (strpos($ifn, "Q_") > 1 || strpos($ifn, "lo") === 0 || strpos($ifn, "enc") === 0 ||
                               strpos($ifn, "pflog") === 0 || strpos($ifn, "pfsync") === 0 || strpos($ifn, "bridge") === 0 ||
                               strpos($ifn, "gre") === 0 || strpos($ifn, "gif") === 0 || strpos($ifn, "ipsec") === 0) {
                             continue;
